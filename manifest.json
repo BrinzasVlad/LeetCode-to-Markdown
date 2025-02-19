@@ -20,11 +20,5 @@
     "background": {
         "service_worker": "backgroundDownloader.js"
     },
-    "content_scripts": [
-        {
-            "matches": ["https://leetcode.com/problems/*"],
-            "js": ["pageScript.js"]
-        }
-    ],
     "incognito": "split"
 }

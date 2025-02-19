@@ -1,18 +1,5 @@
-// Consider injecting this via something like
-// await chrome.scripting.executeScript({
-//     target: { tabId: tab.id },
-//     files: ["pageScript.js"]
-// });
-// to handle the fact that otherwise it won't work unless you refresh the page.
 
-chrome.runtime.onMessage.addListener((message, _sender, _sendResponse) => {
-    if (message.action === "scanAndDownload") {
-        // const description = document.querySelector(".description"); // Adjust selector
-        //const markdown = convertToMarkdown(description.innerText);
-        //downloadMarkdown(markdown);
-        downloadMarkdown("Hello!");
-    }
-});
+downloadMarkdown(convertToMarkdown("Hello!"));
 
 function convertToMarkdown(text) {
     // Add your conversion logic here
