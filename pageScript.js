@@ -1,9 +1,24 @@
 
-downloadMarkdown(convertToMarkdown("Hello!"));
+downloadMarkdown(pageToMarkdown());
 
-function convertToMarkdown(text) {
-    // Add your conversion logic here
-    return text; // Placeholder
+function pageToMarkdown() {
+    const problemTitle = document.querySelector(".text-title-large").firstChild.innerText;
+    const problemURL = document.querySelector(".text-title-large").firstChild.href;
+
+    const problemDescriptionHTML = document.querySelector("[data-track-load=description_content]").innerHTML;
+    
+    const markdown = assembleMarkdown(problemTitle, problemURL, problemDescriptionHTML);
+
+    return markdown;
+}
+function assembleMarkdown(title, url, descriptionHTML) {
+    let markdown = "";
+
+    markdown += `(${title})[${url}]\n\n`;
+
+    markdown += descriptionHTML;
+
+    return markdown;
 }
 
 function downloadMarkdown(markdown) {
