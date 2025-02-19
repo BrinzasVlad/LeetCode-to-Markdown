@@ -1,0 +1,30 @@
+{
+    "name": "LeetCode to Markdown",
+    "description": "A Chrome Extension that scans a LeetCode problem page, extracts the problem description, and saves it in GitHub-friendly markdown.",
+    "version": "1.0",
+    "icons": {
+        "16": "LtM Icon 16.png",
+        "48": "LtM Icon 48.png",
+        "128": "LtM Icon 128.png"
+    },
+    "permissions": [ "activeTab", "downloads", "scripting" ],
+    "manifest_version": 3,
+    "action": {
+        "default_popup": "popup.html",
+        "default_icon": {
+            "16": "LtM Icon 16.png",
+            "48": "LtM Icon 48.png",
+            "128": "LtM Icon 128.png"
+        }
+    },
+    "background": {
+        "service_worker": "backgroundDownloader.js"
+    },
+    "content_scripts": [
+        {
+            "matches": ["https://leetcode.com/problems/*"],
+            "js": ["pageScript.js"]
+        }
+    ],
+    "incognito": "split"
+}
