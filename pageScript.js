@@ -175,12 +175,12 @@ function downloadMarkdown(markdown) {
     const url = URL.createObjectURL(blob);
 
     // V3, Promise-based, .then()
-    // chrome.runtime.sendMessage({ action: "download", url: url, filename: "ReadMe.md" }).
+    // chrome.runtime.sendMessage({ action: "download", url: url, filename: "README.md" }).
     //     then( (_response) => {
     //         URL.revokeObjectURL(url);
     //     });
 
-    chrome.runtime.sendMessage( { action: "download", url: url, filename: "ReadMe.md" },
+    chrome.runtime.sendMessage( { action: "download", url: url, filename: "README.md" },
         (_response) => {
             URL.revokeObjectURL(url);
         }
