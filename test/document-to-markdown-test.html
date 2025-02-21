@@ -1,0 +1,129 @@
+<body>
+    <div>
+        <div id="expected-output" style="width: 50%; float: left"></div>
+        <div id="actual-output" style="width: 50%; float: right"></div>
+    </div>
+</body>
+<script src="tinytest.js"></script>
+<script src="../pageScript.js"></script>
+<script>
+function nodeFromHTML(rawHTML) {
+    let div = document.createElement('div');
+    div.innerHTML = rawHTML;
+    return div.firstChild;
+}
+
+const totalCharacterAfterTransformation = {
+    input: nodeFromHTML(`<div class="elfjS" data-track-load="description_content"><p>You are given a string <code>s</code> and an integer <code>t</code>, representing the number of <strong>transformations</strong> to perform. In one <strong>transformation</strong>, every character in <code>s</code> is replaced according to the following rules:</p>
+
+<ul>
+	<li>If the character is <code>'z'</code>, replace it with the string <code>"ab"</code>.</li>
+	<li>Otherwise, replace it with the <strong>next</strong> character in the alphabet. For example, <code>'a'</code> is replaced with <code>'b'</code>, <code>'b'</code> is replaced with <code>'c'</code>, and so on.</li>
+</ul>
+
+<p>Return the <strong>length</strong> of the resulting string after <strong>exactly</strong> <code>t</code> transformations.</p>
+
+<p>Since the answer may be very large, return it <strong>modulo</strong> <code>10<sup>9</sup> + 7</code>.</p>
+
+<p>&nbsp;</p>
+<p><strong class="example">Example 1:</strong></p>
+
+<div class="example-block">
+<p><strong>Input:</strong> <span class="example-io">s = "abcyy", t = 2</span></p>
+
+<p><strong>Output:</strong> <span class="example-io">7</span></p>
+
+<p><strong>Explanation:</strong></p>
+
+<ul>
+	<li><strong>First Transformation (t = 1)</strong>:
+
+	<ul>
+		<li><code>'a'</code> becomes <code>'b'</code></li>
+		<li><code>'b'</code> becomes <code>'c'</code></li>
+		<li><code>'c'</code> becomes <code>'d'</code></li>
+		<li><code>'y'</code> becomes <code>'z'</code></li>
+		<li><code>'y'</code> becomes <code>'z'</code></li>
+		<li>String after the first transformation: <code>"bcdzz"</code></li>
+	</ul>
+	</li>
+	<li><strong>Second Transformation (t = 2)</strong>:
+	<ul>
+		<li><code>'b'</code> becomes <code>'c'</code></li>
+		<li><code>'c'</code> becomes <code>'d'</code></li>
+		<li><code>'d'</code> becomes <code>'e'</code></li>
+		<li><code>'z'</code> becomes <code>"ab"</code></li>
+		<li><code>'z'</code> becomes <code>"ab"</code></li>
+		<li>String after the second transformation: <code>"cdeabab"</code></li>
+	</ul>
+	</li>
+	<li><strong>Final Length of the string</strong>: The string is <code>"cdeabab"</code>, which has 7 characters.</li>
+</ul>
+</div>
+
+<p><strong class="example">Example 2:</strong></p>
+
+<div class="example-block">
+<p><strong>Input:</strong> <span class="example-io">s = "azbk", t = 1</span></p>
+
+<p><strong>Output:</strong> <span class="example-io">5</span></p>
+
+<p><strong>Explanation:</strong></p>
+
+<ul>
+	<li><strong>First Transformation (t = 1)</strong>:
+
+	<ul>
+		<li><code>'a'</code> becomes <code>'b'</code></li>
+		<li><code>'z'</code> becomes <code>"ab"</code></li>
+		<li><code>'b'</code> becomes <code>'c'</code></li>
+		<li><code>'k'</code> becomes <code>'l'</code></li>
+		<li>String after the first transformation: <code>"babcl"</code></li>
+	</ul>
+	</li>
+	<li><strong>Final Length of the string</strong>: The string is <code>"babcl"</code>, which has 5 characters.</li>
+</ul>
+</div>
+
+<p>&nbsp;</p>
+<p><strong>Constraints:</strong></p>
+
+<ul>
+	<li><code>1 &lt;= s.length &lt;= 10<sup>5</sup></code></li>
+	<li><code>s</code> consists only of lowercase English letters.</li>
+	<li><code>1 &lt;= t &lt;= 10<sup>5</sup></code></li>
+</ul>
+</div>`),
+    output: "You are given a string `s` and an integer `t`, representing the number of **transformations** to perform. In one **transformation**, every character in `s` is replaced according to the following rules:\n- If the character is `\'z\'`, replace it with the string `\"ab\"`.\n- Otherwise, replace it with the **next** character in the alphabet. For example, `\'a\'` is replaced with `\'b\'`, `\'b\'` is replaced with `\'c\'`, and so on.\n\nReturn the **length** of the resulting string after **exactly** `t` transformations.\n\nSince the answer may be very large, return it **modulo** `10⁹ + 7`.\n\n\n**Example 1:**\n> **Input:** s = \"abcyy\", t = 2\n> \n> **Output:** 7\n> \n> **Explanation:**\n> - **First Transformation (t = 1)**:\n>   - `\'a\'` becomes `\'b\'`\n>   - `\'b\'` becomes `\'c\'`\n>   - `\'c\'` becomes `\'d\'`\n>   - `\'y\'` becomes `\'z\'`\n>   - `\'y\'` becomes `\'z\'`\n>   - String after the first transformation: `\"bcdzz\"`\n> \n> - **Second Transformation (t = 2)**:\n>   - `\'b\'` becomes `\'c\'`\n>   - `\'c\'` becomes `\'d\'`\n>   - `\'d\'` becomes `\'e\'`\n>   - `\'z\'` becomes `\"ab\"`\n>   - `\'z\'` becomes `\"ab\"`\n>   - String after the second transformation: `\"cdeabab\"`\n> \n> - **Final Length of the string**: The string is `\"cdeabab\"`, which has 7 characters.\n\n**Example 2:**\n> **Input:** s = \"azbk\", t = 1\n> \n> **Output:** 5\n> \n> **Explanation:**\n> - **First Transformation (t = 1)**:\n>   - `\'a\'` becomes `\'b\'`\n>   - `\'z\'` becomes `\"ab\"`\n>   - `\'b\'` becomes `\'c\'`\n>   - `\'k\'` becomes `\'l\'`\n>   - String after the first transformation: `\"babcl\"`\n> \n> - **Final Length of the string**: The string is `\"babcl\"`, which has 5 characters.\n\n\n**Constraints:**\n- `1 <= s.length <= 10⁵`\n- `s` consists only of lowercase English letters.\n- `1 <= t <= 10⁵`"
+}
+
+document.getElementById("expected-output").innerText = "Left div - replace this text with your expected output maybe?";
+document.getElementById("actual-output").innerText = "Right div - replace this with your actual output maybe?";
+
+tests({
+
+    // Important testing note:
+    // descriptionToMarkdown does NOT generate the title section of the ReadMe,
+    // so you must exclude that one in your testing data.
+    //
+    // Guide to writing a test:
+    // - pick a LeetCode problem that you have a correctly-formatted markdown description for
+    // - cut out the title heading (and follow-up newlines)
+    // - put the content through a JS string escaper (optional, but saves you the need
+    //   to do it by hand), like https://tools.fromdev.com/javascript-escape-unescape.html
+    // - extract the raw HTML content of the LeetCode description by copying it right from
+    //   the page (I use Chrome > Inspect Element > Copy > Copy element), then paste it
+    //   somewhere here; you can avoid having to escape it (most likely) by using `backticks`
+    // - construct an HTML element tree using the nodeFromHTML() function on the raw HTML
+    // - write a test that asserts that descriptionToMarkdown() applied to the HTML element
+    //   tree matches the (escaped) correctly-formatted markdown
+
+    '3335. total characters after transformations i': () => {
+        const expectedOutput = totalCharacterAfterTransformation.output;
+        const realOutput = descriptionToMarkdown(totalCharacterAfterTransformation.input);
+
+        assertEqualsNoOutput(expectedOutput, realOutput);
+    }
+
+});
+</script>
