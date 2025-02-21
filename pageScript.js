@@ -31,45 +31,81 @@ function descriptionToMarkdown(descriptionHTMLElement) {
 
 function nodeToMarkdown(htmlNode) {
     if (htmlNode.nodeType === Node.TEXT_NODE) {
-        // Skip &nbsp;-only elements inside a <p>; they're only used to force newlines to appear in HTML
-        if (htmlNode.textContent === '\xA0' && htmlNode.parentNode.tagName === "P") return '';  
+        // Text nodes have ONLY textContent; innerText won't work for the processing here
 
-        // Skip extra newlines before unordered lists
-        if (htmlNode.textContent === "\n\n" && htmlNode.nextElementSibling.tagName === "UL") return '';
+        // Skip &nbsp;-only elements inside a <p>; they're only used to force newlines to appear in HTML
+        if (htmlNode.textContent === '\xA0' && htmlNode.parentNode?.tagName === "P") return '';  
+
+        // Skip extra newlines before unordered lists (<li> elements include their own)
+        if (htmlNode.textContent.includes('\n') && htmlNode.nextElementSibling?.tagName === "UL") {
+            return htmlNode.textContent.replaceAll('\n', '');
+        }
+
+        // Trim newlines after unordered lists down to just one // TODO: does this break things?
+        if (htmlNode.textContent.includes('\n\n') && htmlNode.previousElementSibling?.tagName === "UL") {
+            return htmlNode.textContent.replaceAll(/[\n]{2,}/g, '\n');
+        }
 
         // Trim newlines before and after <pre> quote-block: we only want one, not two
-        if (htmlNode.textContent === "\n\n" && htmlNode.nextElementSibling.tagName === "PRE") return '\n';
-        if (htmlNode.textContent === "\n\n" && htmlNode.previousElementSibling.tagName === "PRE") return '\n';
+        if (htmlNode.textContent === "\n\n" && htmlNode.nextElementSibling?.tagName === "PRE") return '\n';
+        if (htmlNode.textContent === "\n\n" && htmlNode.previousElementSibling?.tagName === "PRE") return '\n';
 
-        return htmlNode.textContent; // Text nodes have ONLY textContent; innerText won't work
+        // Trim newlines before and after <pre>-like <div>: we only want one, not two
+        if (htmlNode.textContent === "\n\n"
+        && htmlNode.nextElementSibling?.tagName === "DIV"
+        && htmlNode.nextElementSibling?.classList.contains("example-block")) {
+            return '\n';
+        }
+        if (htmlNode.textContent === "\n\n"
+        && htmlNode.nextElementSibling?.tagName === "DIV"
+        && htmlNode.nextElementSibling?.classList.contains("example-block")) {
+            return '\n';
+        }
+
+        // When tabs are used right before a list item, turn them into the appropriate amount of
+        // double spaces for markdown list nesting (0 for base level, 2 for one nesting in, etc.)
+        if (htmlNode.textContent.includes('\t') && htmlNode.nextElementSibling?.tagName === "LI") {
+            return htmlNode.textContent.replaceAll(/\t+/g, tabs => "  ".repeat(tabs.length - 1));
+        }
+
+        // Otherwise, this is probably just a normal bit of text; return as-is
+        return htmlNode.textContent;
     }
+
 
     const innerMarkdown = Array.from(htmlNode.childNodes).map(nodeToMarkdown).join('');
 
     // Description as-given already contains lots of newlines in text nodes, so there's no need to add more
     const nodeTagName = htmlNode.tagName.toLowerCase();
     switch(nodeTagName) {
-        case 'div':
-            return innerMarkdown; // Root element is a <div>
         case 'p':
             return innerMarkdown;
+        case 'span':
+            return innerMarkdown;
         case 'strong':
-            return `**${innerMarkdown}**`;
+            return insertFormatMarkers(innerMarkdown, "**");
         case 'em':
-            return `_${innerMarkdown}_`;
+            return insertFormatMarkers(innerMarkdown, "_");
         case 'u':
-            return `<ins>${innerMarkdown}</ins>`
+            return insertFormatMarkers(innerMarkdown, "<ins>", "</ins>");
         case 'sub':
             return textToSubscript(innerMarkdown);
         case 'sup':
             return textToSuperscript(innerMarkdown);
         case 'code':
             return `\`${innerMarkdown}\``;
+        case 'div':
+            // Two cases for <div>: either it's the root <div>
+            // (case in which we just return its contents), or...
+            if (!htmlNode.classList.contains("example-block"))
+                return innerMarkdown;
+
+            // ...it's a <div class="example-block">, which works like a <pre>
+            // (case in which fallthrough to <pre> case)
         case 'pre':
             return adjustPreMarkdown(innerMarkdown);
         case 'ul':
-            // Remove tabs from the list; mardown formatting is enough
-            return innerMarkdown.replaceAll('\t', '');
+            return innerMarkdown; // tabs are handled in the text-node handler
         case 'li':
             return `- ${innerMarkdown}`;
         default:
@@ -81,20 +117,38 @@ function nodeToMarkdown(htmlNode) {
 
 function adjustPreMarkdown(preInnerMarkdown) {
     // Quote-style blocks, marked here with <pre>, are obtained in GitHub markdown
-    // by starting them with >, having all lines start with a space, and ending each
-    // line with a double space if the quote block should continue.
-    //
-    // Therefore, we add > at the start, and replace all non-end-of-block newlines
-    // with double-space (to indicate block continues) plus newline (for new line)
-    // plus single space (the starting space of the next line).
-    //
-    // ( What the REGEX does is identify non-end-of-block newlines by them having
-    // some extra character after, formatting them as per the above, then putting
-    // the extra character back in. We need to manually select and reinsert the
-    // extra character, because JavaScript regexes do not work with non-capturing
-    // groups (e.g. something like /\n(?:.)/g). )
+    // by starting every line with a > character. A congruent set of >-starting lines
+    // will be treated as a singular quote block.
 
-    return `> ${ preInnerMarkdown.replaceAll(/\n(.)/g, "  \n $1")}`;
+    const adjustedPreMarkdown = preInnerMarkdown
+        .trim() // remove start/end whitespace
+        .replaceAll('\t', '') // all relevant tabs should've been converted to spaces by now
+        .replaceAll(/[\n]{3,}/g, "\n\n") // no more than one blank line between paragraphs
+        .replaceAll('\n', "\n> "); // > at the start of every new line
+
+    return `> ${adjustedPreMarkdown}`; // Finally, add > for the very first line of the block
+}
+
+function insertFormatMarkers(text, startFormatMarker, endFormatMarker = startFormatMarker) {
+    // Insert the format markers around the text, but skipping any
+    // leading / trailing whitespace (that causes markdown to break).
+    //
+    // I didn't find a nice enough version using JS built-ins, so I wrote my own.
+
+    let startIndex = 0, endIndex = text.length - 1;
+
+    // Find first non-whitespace index
+    while (/\s/.test(text[startIndex])) startIndex++;
+
+    // Find last non-whitespace index
+    while (/\s/.test(text[endIndex])) endIndex--;
+    endIndex++; // Set it right *after* the character
+
+    return text.slice(0, startIndex)         // Leading whitespace
+         + startFormatMarker                 // Format marker
+         + text.slice(startIndex, endIndex)  // Actual text
+         + endFormatMarker                   // Format marker
+         + text.slice(endIndex);             // Trailing whitespace
 }
 
 function textToSubscript(text) {
